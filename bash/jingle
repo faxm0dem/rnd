@@ -1,0 +1,51 @@
+play()
+{
+  # play something while toggling audio on
+  # Usage: play /usr/bin/mpv ~/foo.mp3
+	amixer get Master | grep -qw off
+	ret=$?
+	[ $ret -eq 0 ] && amixer set Master toggle >/dev/null
+	$@
+	[ $ret -eq 0 ] && amixer set Master toggle >/dev/null
+}
+
+touch()
+{
+  # can't touch this
+	/usr/bin/touch $@
+	if [ $? -ne 0 ]; then
+		play mpv --really-quiet mc_hammer-cant_touch_this.ogg&
+	fi
+}
+
+mpvshuffle()
+{
+	# play random files
+	DIR=${1:-$PWD}
+	find $DIR -type f -print0 | xargs -0  bash -c '</dev/tty mpv -vo null --shuffle "$@"'
+}
+
+ouich()
+{
+	# la classe américaine
+	if [ "$1" == "list" ]; then
+		lftp -e 'ls;exit' http://ouich.es/ | awk -F/ '/tag/{print $2}' | sort | column
+	elif [ -z "$1" ]; then
+		tag=$(curl -s http://ouich.es/random -I | awk -F': ' '$1 == "Location" {print $2}')
+		if [ -n "$tag" ]; then
+			echo $tag
+			play mpv --really-quiet http://ouich.es$tag
+		else
+			play mpv --really-quiet http://ouich.es/random
+		fi
+	else
+		play mpv --really-quiet https://ouich.es/mp3/$1.mp3
+	fi
+}
+
+darth()
+{
+	# I am your shell function
+	play mpv http://www.thesoundarchive.com/starwars/swvader02.mp3
+}
+
