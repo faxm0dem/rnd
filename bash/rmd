@@ -1,0 +1,41 @@
+#!/bin/bash
+
+DEBUG=1
+debug()
+{
+  if [[ -n "$DEBUG" ]]; then
+  	echo $@
+  fi
+}
+
+# Copyleft Fabien Wernli
+# 20220609
+# record desktop after choosing rectangle
+
+# abuse imagemagick to get geometry
+# thanks to inz#suckless
+# when clicked, you get full window size
+# when dragged, you get size + offset
+# example output:
+#   click: /dev/null PS 1914x1159 16-bit Palette sRGB 187c 0.450u 0:00.274
+#    drag: /dev/null PS 165x105 1920x1968+1155+429 16-bit Palette sRGB 1c 0.000u 0:00.002
+
+geometry_raw_output=$(import -verbose xpm:/dev/null 2>&1)
+debug $geometry_raw_output
+
+# matches only drag for now
+# for click we need windowid anyway which imagemagick doesn't give us so no-go
+re='^\/dev\/null PS ([[:digit:]]+)x([[:digit:]]+) ([[:digit:]]+)x([[:digit:]]+)\+([[:digit:]]+)\+([[:digit:]]+)'
+
+if [[ "$geometry_raw_output" =~ $re ]]; then
+	width="${BASH_REMATCH[1]}"
+	height="${BASH_REMATCH[2]}"
+	x_offset="${BASH_REMATCH[5]}"
+	y_offset="${BASH_REMATCH[6]}"
+	debug width=$width height=$height x_offset=$x_offset y_offset=$y_offset
+  recordmydesktop -x $x_offset -y $y_offset --width=$width --height=$height --no-sound --on-the-fly-encoding
+else
+	echo "Please drag your mouse to select rectangle instead" 1>&2
+fi
+
+
