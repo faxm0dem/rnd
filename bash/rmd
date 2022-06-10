@@ -39,6 +39,9 @@ if geometry_raw_output=$(slop -of "%x %y %w %h %i"); then
 	read -r x_offset y_offset width height window_id <<< $geometry_raw_output
 	debug width=$width height=$height x_offset=$x_offset y_offset=$y_offset
   recordmydesktop -x $x_offset -y $y_offset --width=$width --height=$height --no-sound --on-the-fly-encoding -o $TEMPDIR/$(date +%s-rmd.ogg) &
+	# alternatively you could use ffmpeg
+	# ffmpeg -f x11grab -s "$width"x"$height" -i :0.0+$x_offset,$y_offset -f alsa -i pulse $TEMPDIR/$(date +%s)-rmd.ogg &
+	# if you want desktop sounds make sure to set pavucontrol recording to a monitor device
 	echo $! > $PIDFILE
 	wait $(<$PIDFILE)
 	rm $PIDFILE
