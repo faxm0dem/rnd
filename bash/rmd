@@ -3,6 +3,12 @@
 # Copyleft Fabien Wernli
 # 20220609
 # record desktop after choosing rectangle
+# Will stop recording when run a second time
+# Example usage with xbindkeys:
+#
+# "/path/to/rmd"
+#   Shift + Alt + j
+#
 
 # requirements:
 # https://github.com/Enselic/recordmydesktop
@@ -12,6 +18,9 @@
 # thanks to frobnitz#suckless for the pointer to slop
 
 DEBUG=${DEBUG:-}
+PIDFILE=/var/tmp/rmd.pid
+TEMPDIR=/tmp
+
 debug()
 {
   if [[ -n "$DEBUG" ]]; then
@@ -19,11 +28,20 @@ debug()
   fi
 }
 
+if [[ -f $PIDFILE ]]; then
+	echo "Attempting to kill running recordmydesktop" 1>&2  
+	kill $(<$PIDFILE)
+	exit $?
+fi
+
 if geometry_raw_output=$(slop -of "%x %y %w %h %i"); then
 	debug $geometry_raw_output
 	read -r x_offset y_offset width height window_id <<< $geometry_raw_output
 	debug width=$width height=$height x_offset=$x_offset y_offset=$y_offset
-  recordmydesktop -x $x_offset -y $y_offset --width=$width --height=$height --no-sound --on-the-fly-encoding
+  recordmydesktop -x $x_offset -y $y_offset --width=$width --height=$height --no-sound --on-the-fly-encoding -o $TEMPDIR/$(date +%s-rmd.ogg) &
+	echo $! > $PIDFILE
+	wait $(<$PIDFILE)
+	rm $PIDFILE
 else
 	echo "Something went wrong while detecting window geometry. Try to restart script with DEBUG=1 env variable." 1>&2
 fi
