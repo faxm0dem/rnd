@@ -1,3 +1,6 @@
+# Some random bash functions
+# to add some life to your shell
+
 play()
 {
   # play something while toggling audio on
